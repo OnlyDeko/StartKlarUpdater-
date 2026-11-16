@@ -1,0 +1,27 @@
+name: Release aus Drop-Branch
+
+# Nimmt InstallUpdates.exe + version.txt vom Branch "release-drop",
+# erstellt daraus das Release (Tag = v<version>) und löscht den Branch wieder.
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: release-drop
+      - name: Release erstellen
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          TAG="v$(tr -d '[:space:]' < version.txt)"
+          gh release create "$TAG" InstallUpdates.exe \
+            --repo "$GITHUB_REPOSITORY" --target main \
+            --title "StarklarUpdater $TAG" \
+            --notes "$(cat notes.txt 2>/dev/null || echo "Build $TAG")"
+          git push origin --delete release-drop
